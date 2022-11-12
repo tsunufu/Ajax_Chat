@@ -7,36 +7,53 @@
 </head>
 <body style="width:60%;margin:0 auto;text-align:center;">
   <h1>掲示板アプリでAjax</h1>
-  <div class="comment-form">
-    <input type="text" id="user-name" placeholder="名無し" /><br />
-    <textarea id="comment-body" /></textarea><br />
-    <input id="submit-comment" type="button" value="コメントする" />
-  </div>
-  <div class="comment-view">
-    <div id="comments">
-      <% unless @comments.nil? %>
-      <% @comments.each do |comment| %>
-        <p><%= escape_html "#{comment.body} by #{comment.user_name}" %></p>
-      <% end %>
-      <% end %>
+  <% if !current_user.nil? %>
+    <ul>
+      <li>こんにちは<%= current_user.name %>さん</li>
+      <li><a href="/signout">ログアウト</a></li>
+    </ul>
+    <div class="comment-form">
+      <input type="hidden" id="user-id" value="<%= current_user.name %>">
+      <input type="text" id="user-name" placeholder="名無し" /><br />
+      <textarea id="comment-body" /></textarea><br />
+      <input id="submit-comment" type="button" value="コメントする" />
     </div>
-  </div>
+    <div class="comment-view">
+      <div id="comments">
+        <% unless @comments.nil? %>
+        <% @comments.each do |comment| %>
+          <p><%= comment.body %> <%= User.find(comment.user_id).name %></p>
+        <% end %>
+        <% end %>
+      </div>
+    </div>
+  <% else %>
+    <ul>
+      <li>新規ユーザーですか？</li>
+      <li><a href="/signin">ログイン</a></li>
+      <li><a href="/signup">新規登録</a></li>
+    </ul>
+  <% end %>
+  
   <script type="text/javascript">
     function escapeHTML(s) {
       return $('<div>').text(s).html();
     }
     $(function(){
       $("#submit-comment").click(function(){
-        console.log("click!")
+        console.log("click!");
         var comment = $("#comment-body").val();
-        var userName = $("#user-name").val();
-        if(userName.length == 0) userId = "名無し" ;
+        // var userName = $("#user-name").val();
+        var userId = $("#user-id").val();
+        console.log(userId);
+        // if(userName.length == 0) userName = "名無し" ;
         var request = $.ajax({
           type: "POST",
           url: "/comment",
           data: {
             body: comment,
-            user_name:  userName
+            // user_name: userName,
+            user_id: userId
           }
         });
         request.done(function(msg){
@@ -46,7 +63,9 @@
             dataType: "json"
           })
           .done(function(res){
-            $("#comments").prepend('<p>' + escapeHTML(res.body) + ' by ' + escapeHTML(res.user_name) + '</p>');
+            // $("#comments").prepend('<p>' + escapeHTML(res.body) + ' by ' + escapeHTML(res.user_name) + '</p>');
+            $("#comments").prepend('<p>' + escapeHTML(res.body) + ' by ' + escapeHTML(res.user_id) + '</p>');
+            console.log("送信");
           });
         });
       });
